@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuotaStore - Sistem Penjualan Kuota</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar-active {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-right: 3px solid #6366f1;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Login/Register Page -->
+    <div id="authPage" class="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div class="max-w-md w-full">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-wifi text-2xl text-purple-600"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800">QuotaStore</h1>
+                    <p class="text-gray-600">Sistem Penjualan Kuota Internet</p>
+                </div>
+
+                <!-- Alert Messages -->
+                <div id="alertBox"></div>
+
+                <!-- Login Form -->
+                <div id="loginSection">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Masuk ke Sistem</h2>
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                            <input type="text" id="loginUsername" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Masukkan username">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                            <input type="password" id="loginPassword" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Masukkan password">
+                        </div>
+                        <button type="submit" id="loginBtn"
+                                class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Masuk
+                        </button>
+                    </form>
+                    
+                    <p class="text-center mt-4 text-gray-600">
+                        Belum punya akun? 
+                        <button onclick="showRegister()" class="text-purple-600 hover:underline font-semibold">Daftar di sini</button>
+                    </p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerSection" class="hidden">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Daftar Akun Baru</h2>
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Nama Lengkap</label>
+                            <input type="text" id="registerName" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Masukkan nama lengkap">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                            <input type="text" id="registerUsername" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Pilih username">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                            <input type="email" id="registerEmail" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Masukkan email">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">No. WhatsApp</label>
+                            <input type="text" id="registerPhone" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="08xxxxxxxxxx">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                            <input type="password" id="registerPassword" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                                   placeholder="Buat password">
+                        </div>
+                        <button type="submit" id="registerBtn"
+                                class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                            <i class="fas fa-user-plus mr-2"></i>Daftar
+                        </button>
+                    </form>
+                    <p class="text-center mt-4 text-gray-600">
+                        Sudah punya akun? 
+                        <button onclick="showLogin()" class="text-purple-600 hover:underline font-semibold">Masuk di sini</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="mainDashboard" class="hidden min-h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40">
+            <div class="p-6 border-b">
+                <div class="flex items-center">
+                    <div class="bg-purple-100 w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-wifi text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800">QuotaStore</h2>
+                        <p class="text-sm text-gray-600" id="userRole">User Panel</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-6">
+                <div class="px-6 mb-4">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+                </div>
+                
+                <a href="#" onclick="showSection('dashboard')" id="nav-dashboard" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 sidebar-active">
+                    <i class="fas fa-home mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="#" onclick="showSection('quotas')" id="nav-quotas" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-wifi mr-3"></i>
+                    <span>Daftar Kuota</span>
+                </a>
+                
+                <a href="#" onclick="showSection('topup')" id="nav-topup" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-credit-card mr-3"></i>
+                    <span>Top Up Saldo</span>
+                </a>
+                
+                <a href="#" onclick="showSection('history')" id="nav-history" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-history mr-3"></i>
+                    <span>Riwayat Transaksi</span>
+                </a>
+                
+                <div class="px-6 mt-8">
+                    <button onclick="logout()" class="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ml-64">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-800" id="pageTitle">Dashboard</h1>
+                        <p class="text-gray-600">Selamat datang, <span id="userName"></span></p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-green-100 px-4 py-2 rounded-lg">
+                            <span class="text-green-800 font-semibold">Saldo: Rp <span id="userBalance">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Balance Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-wallet text-xl text-green-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-gray-800">Rp <span id="dashboardBalance">0</span></div>
+                                <p class="text-gray-600">Saldo Anda</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Purchases -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-shopping-cart text-xl text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-gray-800" id="totalPurchases">0</div>
+                                <p class="text-gray-600">Total Pembelian</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Quotas -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-wifi text-xl text-purple-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-gray-800" id="activeQuotas">5</div>
+                                <p class="text-gray-600">Paket Tersedia</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Last Transaction -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-clock text-xl text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-gray-800" id="lastTransaction">Belum ada</div>
+                                <p class="text-gray-600">Transaksi Terakhir</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Selamat Datang di QuotaStore!</h3>
+                    <p class="text-gray-600 mb-4">
+                        Sistem penjualan kuota internet terpercaya. Anda dapat membeli berbagai paket kuota dari provider terkemuka dengan mudah dan aman.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <i class="fas fa-shield-alt text-2xl text-blue-600 mb-2"></i>
+                            <h4 class="font-semibold text-gray-800">Aman & Terpercaya</h4>
+                            <p class="text-sm text-gray-600">Transaksi dijamin aman</p>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <i class="fas fa-bolt text-2xl text-green-600 mb-2"></i>
+                            <h4 class="font-semibold text-gray-800">Proses Cepat</h4>
+                            <p class="text-sm text-gray-600">Kuota langsung masuk</p>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded-lg">
+                            <i class="fas fa-headset text-2xl text-purple-600 mb-2"></i>
+                            <h4 class="font-semibold text-gray-800">Support 24/7</h4>
+                            <p class="text-sm text-gray-600">Bantuan kapan saja</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotas Section -->
+            <div id="section-quotas" class="p-6 hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Daftar Kuota Tersedia</h2>
+                    <p class="text-gray-600">Pilih paket kuota yang sesuai dengan kebutuhan Anda</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="quotasList">
+                    <!-- Telkomsel Packages -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Paket Hemat 5GB</h3>
+                                <p class="text-red-600 font-medium">Telkomsel</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">Rp 25.000</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kuota:</span>
+                                <span class="font-medium">5GB</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Masa Aktif:</span>
+                                <span class="font-medium">30 hari</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showBuyQuotaModal('Paket Hemat 5GB', 'Telkomsel', '5GB', '30 hari', 25000)" 
+                                class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i>Beli Sekarang
+                        </button>
+                    </div>
+
+                    <!-- XL Packages -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Xtra Combo 10GB</h3>
+                                <p class="text-blue-600 font-medium">XL Axiata</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">Rp 45.000</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kuota:</span>
+                                <span class="font-medium">10GB</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Masa Aktif:</span>
+                                <span class="font-medium">30 hari</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showBuyQuotaModal('Xtra Combo 10GB', 'XL Axiata', '10GB', '30 hari', 45000)" 
+                                class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i>Beli Sekarang
+                        </button>
+                    </div>
+
+                    <!-- Indosat Packages -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Freedom Internet 15GB</h3>
+                                <p class="text-yellow-600 font-medium">Indosat Ooredoo</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">Rp 65.000</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kuota:</span>
+                                <span class="font-medium">15GB</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Masa Aktif:</span>
+                                <span class="font-medium">30 hari</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showBuyQuotaModal('Freedom Internet 15GB', 'Indosat Ooredoo', '15GB', '30 hari', 65000)" 
+                                class="w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i>Beli Sekarang
+                        </button>
+                    </div>
+
+                    <!-- Tri Packages -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Always On 20GB</h3>
+                                <p class="text-orange-600 font-medium">3 (Tri)</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">Rp 75.000</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kuota:</span>
+                                <span class="font-medium">20GB</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Masa Aktif:</span>
+                                <span class="font-medium">30 hari</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showBuyQuotaModal('Always On 20GB', '3 (Tri)', '20GB', '30 hari', 75000)" 
+                                class="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i>Beli Sekarang
+                        </button>
+                    </div>
+
+                    <!-- Smartfren Packages -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Unlimited Max 30GB</h3>
+                                <p class="text-pink-600 font-medium">Smartfren</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">Rp 85.000</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kuota:</span>
+                                <span class="font-medium">30GB</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Masa Aktif:</span>
+                                <span class="font-medium">30 hari</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showBuyQuotaModal('Unlimited Max 30GB', 'Smartfren', '30GB', '30 hari', 85000)" 
+                                class="w-full bg-pink-600 text-white py-3 rounded-lg hover:bg-pink-700 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i>Beli Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Up Section -->
+            <div id="section-topup" class="p-6 hidden">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Top Up Saldo</h2>
+                        
+                        <form onsubmit="handleTopUp(event)">
+                            <div class="mb-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah Top Up</label>
+                                <select id="topupAmount" required onchange="updateTopUpInfo()"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500">
+                                    <option value="">Pilih nominal</option>
+                                    <option value="10000">Rp 10.000</option>
+                                    <option value="25000">Rp 25.000</option>
+                                    <option value="50000">Rp 50.000</option>
+                                    <option value="100000">Rp 100.000</option>
+                                    <option value="200000">Rp 200.000</option>
+                                    <option value="500000">Rp 500.000</option>
+                                </select>
+                            </div>
+
+                            <div id="paymentInfo" class="hidden mb-6 p-4 bg-blue-50 rounded-lg">
+                                <h3 class="font-semibold text-blue-800 mb-3">Informasi Pembayaran</h3>
+                                <div class="space-y-2 text-sm text-blue-700">
+                                    <p><strong>Bank:</strong> BRI</p>
+                                    <p><strong>Nama:</strong> QuotaStore Official</p>
+                                    <p><strong>No. Rekening:</strong> 1234-5678-9012-3456</p>
+                                    <p><strong>Jumlah Transfer:</strong> Rp <span id="transferAmount">0</span></p>
+                                    <p><strong>Kode Unik:</strong> <span id="uniqueCode" class="font-mono bg-yellow-200 px-2 py-1 rounded"></span></p>
+                                </div>
+                                <div class="mt-3 p-3 bg-yellow-100 rounded border-l-4 border-yellow-500">
+                                    <p class="text-yellow-800 text-sm">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        Transfer sesuai dengan jumlah + kode unik untuk verifikasi otomatis
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="topupBtn"
+                                    class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                                <i class="fas fa-paper-plane mr-2"></i>Kirim Permintaan Top Up
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="section-history" class="p-6 hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Riwayat Transaksi</h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="border border-gray-300 px-4 py-3 text-left">Tanggal</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left">Tipe</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left">Deskripsi</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-right">Jumlah</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <tr><td colspan="5" class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-history text-4xl mb-2 block"></i>
+                                    Belum ada transaksi
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Quota Modal -->
+    <div id="buyQuotaModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Pembelian</h3>
+            <div id="quotaDetails" class="mb-6">
+                <!-- Quota details will be loaded here -->
+            </div>
+            <form onsubmit="handleBuyQuota(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Nomor HP Tujuan</label>
+                    <input type="tel" id="targetPhone" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
+                           placeholder="08xxxxxxxxxx">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeBuyQuotaModal()" 
+                            class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Beli Sekarang
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Using your provided API URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbzpqlWGL57HrYKzLEhgaqeneA6iFc5hn6N2uu8tzTO682xBn_3kcYLt1NyzkZO_XaO-pA/exec";
+        
+        // Global variables
+        let currentUser = null;
+        let selectedQuota = null;
+
+        // Alert function from your code
+        function showAlert(msg, type = "success") {
+            const alertBox = document.getElementById("alertBox");
+            const alertClass = type === "success" ? "alert-success" : "alert-error";
+            alertBox.innerHTML = `<div class="alert ${alertClass}"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${msg}</div>`;
+            setTimeout(() => alertBox.innerHTML = "", 4000);
+        }
+
+        // LOGIN - Using your exact code structure
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.innerHTML = '<div class="loading-spinner inline-block mr-2"></div>Masuk...';
+            loginBtn.disabled = true;
+            
+            const data = {
+                action: "login",
+                username: document.getElementById("loginUsername").value,
+                password: document.getElementById("loginPassword").value
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                console.log(result);
+
+                if (result.status === "success") {
+                    // Set current user data
+                    currentUser = {
+                        username: result.username,
+                        name: result.fullname || result.username,
+                        email: result.email || '',
+                        phone: result.phone || '',
+                        balance: result.balance || 0,
+                        role: result.role || 'user'
+                    };
+                    
+                    showAlert(`Login berhasil! Selamat datang, ${result.username}`, "success");
+                    showDashboard();
+                } else {
+                    showAlert(result.message || "Login gagal", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal koneksi ke API", "error");
+            } finally {
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Masuk';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // REGISTER - Using your exact code structure
+        document.getElementById("registerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const registerBtn = document.getElementById('registerBtn');
+            registerBtn.innerHTML = '<div class="loading-spinner inline-block mr-2"></div>Mendaftar...';
+            registerBtn.disabled = true;
+            
+            const data = {
+                action: "register",
+                fullname: document.getElementById("registerName").value,
+                username: document.getElementById("registerUsername").value,
+                email: document.getElementById("registerEmail").value,
+                phone: document.getElementById("registerPhone").value,
+                password: document.getElementById("registerPassword").value
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                console.log(result);
+
+                if (result.status === "success") {
+                    showAlert("Registrasi berhasil! Silakan login.", "success");
+                    document.getElementById("registerForm").reset();
+                    showLogin();
+                } else {
+                    showAlert(result.message || "Registrasi gagal", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal koneksi ke API", "error");
+            } finally {
+                registerBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Daftar';
+                registerBtn.disabled = false;
+            }
+        });
+
+        // UI Functions
+        function showLogin() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            
+            // Setup user info
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userBalance').textContent = formatCurrency(currentUser.balance);
+            document.getElementById('dashboardBalance').textContent = formatCurrency(currentUser.balance);
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('authPage').classList.remove('hidden');
+            document.getElementById('mainDashboard').classList.add('hidden');
+            
+            // Clear forms
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+            
+            showLogin();
+            showAlert('Logout berhasil!', 'success');
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = ['dashboard', 'quotas', 'topup', 'history'];
+            sections.forEach(section => {
+                document.getElementById(`section-${section}`).classList.add('hidden');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('sidebar-active');
+            });
+            
+            // Show selected section
+            document.getElementById(`section-${sectionName}`).classList.remove('hidden');
+            document.getElementById(`nav-${sectionName}`).classList.add('sidebar-active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'quotas': 'Daftar Kuota',
+                'topup': 'Top Up Saldo',
+                'history': 'Riwayat Transaksi'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionName];
+        }
+
+        // Top Up Functions
+        function updateTopUpInfo() {
+            const amount = parseInt(document.getElementById('topupAmount').value);
+            if (!amount) {
+                document.getElementById('paymentInfo').classList.add('hidden');
+                return;
+            }
+            
+            // Generate unique code (last 3 digits of timestamp)
+            const uniqueCode = Date.now().toString().slice(-3);
+            const totalAmount = amount + parseInt(uniqueCode);
+            
+            document.getElementById('transferAmount').textContent = formatCurrency(totalAmount);
+            document.getElementById('uniqueCode').textContent = uniqueCode;
+            document.getElementById('paymentInfo').classList.remove('hidden');
+        }
+
+        function handleTopUp(event) {
+            event.preventDefault();
+            
+            const amount = parseInt(document.getElementById('topupAmount').value);
+            const uniqueCode = document.getElementById('uniqueCode').textContent;
+            
+            // Reset form
+            document.getElementById('topupAmount').value = '';
+            document.getElementById('paymentInfo').classList.add('hidden');
+            
+            showAlert('Permintaan top up berhasil dikirim! Silakan transfer sesuai instruksi dan tunggu konfirmasi admin.', 'success');
+        }
+
+        // Buy Quota Functions
+        function showBuyQuotaModal(name, provider, quota, validity, price) {
+            // Check balance first
+            if (currentUser.balance < price) {
+                showAlert('Saldo tidak mencukupi! Silakan top up terlebih dahulu.', 'error');
+                return;
+            }
+            
+            selectedQuota = { name, provider, quota, validity, price };
+            
+            document.getElementById('quotaDetails').innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-2">${name}</h4>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p>Provider: ${provider}</p>
+                        <p>Kuota: ${quota}</p>
+                        <p>Masa Aktif: ${validity}</p>
+                        <p class="font-semibold text-green-600">Harga: Rp ${formatCurrency(price)}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('buyQuotaModal').classList.remove('hidden');
+        }
+
+        function closeBuyQuotaModal() {
+            document.getElementById('buyQuotaModal').classList.add('hidden');
+            document.getElementById('targetPhone').value = '';
+            selectedQuota = null;
+        }
+
+        function handleBuyQuota(event) {
+            event.preventDefault();
+            
+            const targetPhone = document.getElementById('targetPhone').value;
+            
+            if (!selectedQuota) {
+                showAlert('Terjadi kesalahan, silakan coba lagi.', 'error');
+                return;
+            }
+            
+            // Simulate purchase success
+            currentUser.balance -= selectedQuota.price;
+            document.getElementById('userBalance').textContent = formatCurrency(currentUser.balance);
+            document.getElementById('dashboardBalance').textContent = formatCurrency(currentUser.balance);
+            
+            showAlert(`Pembelian ${selectedQuota.name} berhasil! Kuota akan dikirim ke ${targetPhone} dalam beberapa menit.`, 'success');
+            closeBuyQuotaModal();
+        }
+
+        // Utility Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID').format(amount);
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('QuotaStore initialized with integrated API');
+            showLogin();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'978286da104ece32',t:'MTc1NjcwNjIxMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
